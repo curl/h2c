@@ -1,12 +1,11 @@
 #!/usr/bin/perl
 
-my @raw;
 my $state; # 0 is request-line, 1-headers, 2-body
 while(<STDIN>) {
-    chomp;
-    push @raw, $_;
+    my $l = $_;
     if(!$state) {
-        if($_ =~ /([^ ]*) +(.*) +(HTTP\/.*)/) {
+        chomp $_;
+        if($l =~ /([^ ]*) +(.*) +(HTTP\/.*)/) {
             $method = $1;
             $path = $2;
             $http = $3;
@@ -17,14 +16,20 @@ while(<STDIN>) {
         }
         $state++;
     }
-    elsif(1 == $state) { 
-        if($_ =~ /([^:]*): *(.*)/) {
+    elsif(1 == $state) {
+        chomp $l;
+        if($l =~ /([^:]*): *(.*)/) {
             $header{$1}=$2;
         }
-        elsif(!length($_)) {
+        elsif(length($l)<2) {
             # body time
             $state++;
         }
+    }
+    elsif(2 == $state) {
+        chomp $l;
+        print STDERR "body!\n";
+        push @body, $l;
     }
 }
 
@@ -37,42 +42,55 @@ if(!$header{'Host'}) {
 
 if($error) {
     print "Error: $error\n";
+    exit;
 }
-else {
-    my $httpver="";
-    my $disabledheaders="";
-    if($method eq "HEAD") {
-        $usemethod = "--head ";
-    }
-    if($usesamehttpversion) {
-        if($http eq "HTTP/1.1") {
-            $httpver = "--http1.1 ";
-        }
-    }
-    if($disableheadersnotseen) {
-        if(!$header{'Accept'}) {
-            $disabledheaders .= "--header Accept: ";
-        }
-        if(!$header{'User-Agent'}) {
-            $disabledheaders .= "--header User-Agent: ";
-        }
-    }
-    foreach my $h (keys %header) {
-        if($h eq "Host") {
-            # We use Host: for the URL creation
-        }
-        else {
-            my $opt = sprintf("--header \"%s: ", $h);
-            if($h eq "User-Agent") {
-                $opt = "--user-agent \"";
-            }
-            $addedheaders .= sprintf("%s%s\" ", $opt, $header{$h});
-        }
-    }
-    printf "curl %s%s%s%shttps://%s%s\n",
-        $usemethod,
-        $httpver,
-        $disabledheaders,
-        $addedheaders,
-        $header{'Host'}, $path;
+
+my $httpver="";
+my $disabledheaders="";
+if(length(join("", @body))) {
+    # TODO: escape the body
+    $usebody= sprintf("--data-binary \"%s\" ", join("", @body));
 }
+if($method eq "HEAD") {
+    $usemethod = "--head ";
+}
+elsif($method eq "POST") {
+    if(!$usebody) {
+        $usebody= sprintf("--data \"\" ");
+    }
+}
+if($usesamehttpversion) {
+    if($http eq "HTTP/1.1") {
+        $httpver = "--http1.1 ";
+    }
+}
+if($disableheadersnotseen) {
+    if(!$header{'Accept'}) {
+        $disabledheaders .= "--header Accept: ";
+    }
+    if(!$header{'User-Agent'}) {
+        $disabledheaders .= "--header User-Agent: ";
+    }
+}
+foreach my $h (keys %header) {
+    if($h eq "Host") {
+        # We use Host: for the URL creation
+    }
+    elsif($h eq "Content-Length") {
+        # we don't set custom size, just usebody
+    }
+    else {
+        my $opt = sprintf("--header \"%s: ", $h);
+        if($h eq "User-Agent") {
+            $opt = "--user-agent \"";
+        }
+        $addedheaders .= sprintf("%s%s\" ", $opt, $header{$h});
+    }
+}
+printf "curl %s%s%s%s%shttps://%s%s\n",
+    $usemethod,
+    $httpver,
+    $disabledheaders,
+    $addedheaders,
+    $usebody,
+    $header{'Host'}, $path;
