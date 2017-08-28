@@ -19,7 +19,7 @@ while(<STDIN>) {
     elsif(1 == $state) {
         chomp $l;
         if($l =~ /([^:]*): *(.*)/) {
-            $header{$1}=$2;
+            $header{lc($1)}=$2;
         }
         elsif(length($l)<2) {
             # body time
@@ -27,19 +27,19 @@ while(<STDIN>) {
         }
     }
     elsif(2 == $state) {
-        chomp $l;
-        print STDERR "body!\n";
         push @body, $l;
     }
 }
 
 my $usesamehttpversion = 1;
 my $disableheadersnotseen = 1;
+my $shellcompatible = 1; # may not been windows command prompt compat
 
-if(!$header{'Host'}) {
+if(!$header{lc('Host')}) {
     $error = "No Host: header makes it impossible to tell URL\n";
 }
 
+ error:
 if($error) {
     print "Error: $error\n";
     exit;
@@ -49,40 +49,61 @@ my $httpver="";
 my $disabledheaders="";
 if(length(join("", @body))) {
     # TODO: escape the body
-    $usebody= sprintf("--data-binary \"%s\" ", join("", @body));
+    my $esc = join("", @body);
+    chomp $esc; # trim the final newline
+    if($shellcompatible) {
+        $esc =~ s/\n/ /g; # turn newlines into space!
+        $esc =~ s/\"/\\"/g; # escape double quotes
+    }
+    $usebody= sprintf("--data-binary \"%s\" ", $esc);
 }
-if($method eq "HEAD") {
+if(uc($method) eq "HEAD") {
     $usemethod = "--head ";
 }
-elsif($method eq "POST") {
+elsif(uc($method) eq "POST") {
     if(!$usebody) {
         $usebody= sprintf("--data \"\" ");
     }
 }
+elsif(uc($method) eq "PUT") {
+    if(!$usebody) {
+        $usebody= sprintf("--data \"\"");
+    }
+    $usebody .= "--request PUT ";
+}
+elsif(uc($method) ne "GET") {
+    $error = "unsupported HTTP method $method";
+    goto error;
+}
+
+
 if($usesamehttpversion) {
-    if($http eq "HTTP/1.1") {
+    if(uc($http) eq "HTTP/1.1") {
         $httpver = "--http1.1 ";
     }
 }
 if($disableheadersnotseen) {
-    if(!$header{'Accept'}) {
+    if(!$header{lc('Accept')}) {
         $disabledheaders .= "--header Accept: ";
     }
-    if(!$header{'User-Agent'}) {
+    if(!$header{lc('User-Agent')}) {
         $disabledheaders .= "--header User-Agent: ";
     }
 }
 foreach my $h (keys %header) {
-    if($h eq "Host") {
+    if(lc($h) eq "host") {
         # We use Host: for the URL creation
     }
-    elsif($h eq "Content-Length") {
+    elsif(lc($h) eq "content-length") {
         # we don't set custom size, just usebody
     }
     else {
         my $opt = sprintf("--header \"%s: ", $h);
-        if($h eq "User-Agent") {
+        if(lc($h) eq "user-agent") {
             $opt = "--user-agent \"";
+        }
+        elsif(lc($h) eq "cookie") {
+            $opt = "--cookie \"";
         }
         $addedheaders .= sprintf("%s%s\" ", $opt, $header{$h});
     }
