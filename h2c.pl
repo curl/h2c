@@ -81,6 +81,13 @@ if($usesamehttpversion) {
     if(uc($http) eq "HTTP/1.1") {
         $httpver = "--http1.1 ";
     }
+    elsif(uc($http) eq "HTTP/2") {
+        $httpver = "--http2 ";
+    }
+    else {
+        $error = "unsupported HTTP version $http";
+        goto error;
+    }
 }
 if($disableheadersnotseen) {
     if(!$header{lc('Accept')}) {
@@ -108,10 +115,12 @@ foreach my $h (keys %header) {
         $addedheaders .= sprintf("%s%s\" ", $opt, $header{$h});
     }
 }
-printf "curl %s%s%s%s%shttps://%s%s\n",
-    $usemethod,
-    $httpver,
-    $disabledheaders,
-    $addedheaders,
-    $usebody,
-    $header{'Host'}, $path;
+
+if($path =~ / /) {
+    $url = sprintf "\"https://%s%s\"", $header{lc('Host')}, $path;
+}
+else {
+    $url = sprintf "https://%s%s", $header{lc('Host')}, $path;
+}
+
+printf "curl ${usemethod}${httpver}${disabledheaders}${addedheaders}${usebody}${url}\n";
