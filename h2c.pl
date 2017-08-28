@@ -3,8 +3,10 @@
 my $state; # 0 is request-line, 1-headers, 2-body
 while(<STDIN>) {
     my $l = $_;
+    # discard CRs completely
+    $l =~ s///g;
     if(!$state) {
-        chomp $_;
+        chomp $l;
         if($l =~ /([^ ]*) +(.*) +(HTTP\/.*)/) {
             $method = $1;
             $path = $2;
