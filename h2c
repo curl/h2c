@@ -332,7 +332,8 @@ foreach my $h (sort keys %header) {
         # we don't set custom size, just usebody
     }
     else {
-        my $opt = sprintf("$opt_header \"%s: ", $h);
+        $exact = $exactcase{$h};
+        my $opt = sprintf("$opt_header \"%s: ", $exact);
         if(lc($h) eq "user-agent") {
             $opt = "$opt_user_agent \"";
             push @docs, manpage("-A", $opt_user_agent, "use this custom User-Agent request header");
