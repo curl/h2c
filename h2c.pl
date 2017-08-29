@@ -201,7 +201,7 @@ foreach my $h (keys %header) {
         }
         elsif(lc($h) eq "cookie") {
             $opt = "$opt_cookie \"";
-            push @docs, manpage("-b", $opt_cookie, "Pass on this custom Cookie: request header");
+            push @docs, manpage("-b", $opt_cookie, "pass on this custom Cookie: request header");
         }
         $addedheaders .= sprintf("%s%s\" ", $opt, $header{$h});
     }
@@ -215,12 +215,12 @@ else {
 }
 
 if($disabledheaders || $addedheaders) {
-    push @docs, manpage("-H", $opt_header, "Add, replace or remove HTTP headers from the request");
+    push @docs, manpage("-H", $opt_header, "add, replace or remove HTTP headers from the request");
 }
 
 if($useverbose) {
     $useverbose = "$opt_verbose ";
-    push @docs, manpage("-v", $opt_verbose, "Show verbose output");
+    push @docs, manpage("-v", $opt_verbose, "show verbose output");
 }
 
 printf "curl ${useverbose}${usemethod}${httpver}${disabledheaders}${addedheaders}${usebody}${url}\n";
