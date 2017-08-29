@@ -84,6 +84,7 @@ while(<STDIN>) {
         chomp $l;
         if($l =~ /([^:]*): *(.*)/) {
             $header{lc($1)}=$2;
+            $exactcase{lc($1)}=$1; # to allow us to use it as read
         }
         elsif(length($l)<2) {
             # body time
@@ -262,9 +263,15 @@ if($usebody) {
     elsif(lc($header{"content-type"}) ne
           "application/x-www-form-urlencoded") {
         # custom
-        $set_contenttype = 1;
+        $ignore_contenttype = 1;
         $addedheaders .= sprintf("$opt_header \"Content-Type: %s\" ",
                                  $header{"content-type"});
+    }
+    elsif((lc($header{"content-type"}) eq
+           "application/x-www-form-urlencoded") && !$do_multipart &&
+          ($method eq "POST")) {
+        # default for normal POST
+        $ignore_contenttype = 1;
     }
 }
 
@@ -314,7 +321,7 @@ foreach my $h (sort keys %header) {
         # let curl do expect on its own
     }
     elsif(lc($h) eq "content-type" &&
-          ($do_multipart || $set_contenttype)) {
+          ($do_multipart || $ignore_contenttype)) {
         # skip this for multipart
     }
     elsif((lc($h) eq "accept") &&
