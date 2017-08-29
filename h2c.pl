@@ -142,6 +142,18 @@ elsif(uc($method) ne "GET") {
     goto error;
 }
 
+if($usebody) {
+    # body is set, handle the content-type
+    if(!$header{lc("Content-Type")}) {
+        $disabledheaders .= "$opt_header Content-Type: ";
+    }
+    elsif(lc($header{lc("Content-Type")}) ne
+          lc("application/x-www-form-urlencoded")) {
+        # custom
+        $addedheaders .= sprintf("$opt_header \"Content-Type: %s\" ",
+                                 $header{lc("Content-Type")});
+    }
+}
 
 if($usesamehttpversion) {
     if(uc($http) eq "HTTP/1.1") {
