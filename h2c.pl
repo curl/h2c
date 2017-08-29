@@ -146,11 +146,11 @@ elsif(uc($method) ne "GET") {
 if($usesamehttpversion) {
     if(uc($http) eq "HTTP/1.1") {
         $httpver = "--http1.1 ";
-        push @docs, manpage("--http1.1", "use HTTP protocol version 1.1");
+        push @docs, manpage("--http1.1", "", "use HTTP protocol version 1.1");
     }
     elsif(uc($http) eq "HTTP/2") {
         $httpver = "--http2 ";
-        push @docs, manpage("--http2", "use HTTP protocol version 2");
+        push @docs, manpage("--http2", "", "use HTTP protocol version 2");
     }
     else {
         $error = "unsupported HTTP version $http";
