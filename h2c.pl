@@ -14,7 +14,7 @@ sub manpage {
     if(!$n) {
         $n = $p;
     }
-    return sprintf("<a href=\"https://curl.haxx.se/docs/manpage.html#%s>%s</a> $desc",
+    return sprintf("<a href=\"https://curl.haxx.se/docs/manpage.html#%s\">%s</a> $desc",
                    $p, $n);
 }
 
