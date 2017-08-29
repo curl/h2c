@@ -98,7 +98,7 @@ while(<STDIN>) {
     $line++;
 }
 
-if(!$header{lc('Host')}) {
+if(!$header{'host'}) {
     $error = "No Host: header makes it impossible to tell URL\n";
 }
 
@@ -131,6 +131,7 @@ else {
 
 my $httpver="";
 my $disabledheaders="";
+my $addedheaders="";
 
 if($header{"content-type"} =~ /^multipart\/form-data;/) {
     # multipart formpost, this is special
@@ -251,14 +252,15 @@ elsif(uc($method) ne "GET") {
 
 if($usebody) {
     # body is set, handle the content-type
-    if(!$header{lc("Content-Type")}) {
+    if(!$header{"content-type"}) {
         $disabledheaders .= "$opt_header Content-Type: ";
     }
-    elsif(lc($header{lc("Content-Type")}) ne
-          lc("application/x-www-form-urlencoded")) {
+    elsif(lc($header{"content-type"}) ne
+          "application/x-www-form-urlencoded") {
         # custom
+        $set_contenttype = 1;
         $addedheaders .= sprintf("$opt_header \"Content-Type: %s\" ",
-                                 $header{lc("Content-Type")});
+                                 $header{"content-type"});
     }
 }
 
@@ -277,10 +279,10 @@ if($usesamehttpversion) {
     }
 }
 if($disableheadersnotseen) {
-    if(!$header{lc('Accept')}) {
+    if(!$header{'accept'}) {
         $disabledheaders .= "$opt_header Accept: ";
     }
-    if(!$header{lc('User-Agent')}) {
+    if(!$header{'user-agent'}) {
         $disabledheaders .= "$opt_header User-Agent: ";
     }
 }
@@ -293,7 +295,8 @@ if($do_multipart) {
     }
 }
 
-foreach my $h (keys %header) {
+# go through the headers alphabetically just to make the order fixed
+foreach my $h (sort keys %header) {
     if(lc($h) eq "host") {
         # We use Host: for the URL creation
     }
@@ -301,7 +304,7 @@ foreach my $h (keys %header) {
         # let curl do expect on its own
     }
     elsif(lc($h) eq "content-type" &&
-          $do_multipart) {
+          ($do_multipart || $set_contenttype)) {
         # skip this for multipart
     }
     elsif((lc($h) eq "accept") &&
@@ -326,10 +329,10 @@ foreach my $h (keys %header) {
 }
 
 if($path =~ / /) {
-    $url = sprintf "\"https://%s%s\"", $header{lc('Host')}, $path;
+    $url = sprintf "\"https://%s%s\"", $header{'host'}, $path;
 }
 else {
-    $url = sprintf "https://%s%s", $header{lc('Host')}, $path;
+    $url = sprintf "https://%s%s", $header{'host'}, $path;
 }
 
 if($disabledheaders || $addedheaders) {
