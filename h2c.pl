@@ -195,6 +195,13 @@ foreach my $h (keys %header) {
     if(lc($h) eq "host") {
         # We use Host: for the URL creation
     }
+    elsif(lc($h) eq "expect") {
+        # let curl do expect on its own
+    }
+    elsif((lc($h) eq "accept") &&
+          ($header{"accept"} eq "*/*")) {
+        # ignore if set to */* as that's a curl default
+    }
     elsif(lc($h) eq "content-length") {
         # we don't set custom size, just usebody
     }
