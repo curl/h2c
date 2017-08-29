@@ -1,10 +1,11 @@
 #!/usr/bin/perl
 
 sub usage {
-    print "h2c.pl [-d][-h][-n][-s][-v] < file \n",
+    print "h2c.pl [-d][-h][-i][-n][-s][-v] < file \n",
         " -a   Allow curl's default headers\n",
         " -d   Output man page HTML links after command line\n",
         " -h   Show short help\n",
+        " -i   Ignore HTTP version\n",
         " -n   Output notes after command line\n",
         " -s   Use short command line options\n",
         " -v   Add a verbose option to the command line";
@@ -36,6 +37,10 @@ while($ARGV[0]) {
         $usedocs = 1;
         shift @ARGV;
     }
+    elsif($ARGV[0] eq "-i") {
+        $usesamehttpversion = 0;
+        shift @ARGV;
+    }
     elsif($ARGV[0] eq "-n") {
         $usenotes = 1;
         shift @ARGV;
@@ -55,6 +60,7 @@ while($ARGV[0]) {
 
 
 my $state; # 0 is request-line, 1-headers, 2-body
+my $line = 1;
 while(<STDIN>) {
     my $l = $_;
     # discard CRs completely
@@ -81,10 +87,15 @@ while(<STDIN>) {
             # body time
             $state++;
         }
+        else {
+            $error="illegal HTTP header on line $line";
+            last;
+        }
     }
     elsif(2 == $state) {
         push @body, $l;
     }
+    $line++;
 }
 
 if(!$header{lc('Host')}) {
@@ -105,6 +116,7 @@ if($uselongoptions) {
     $opt_user_agent = "--user-agent";
     $opt_cookie = "--cookie";
     $opt_verbose = "--verbose";
+    $opt_form = "--form";
 }
 else {
     $opt_data = "-d";
@@ -114,11 +126,92 @@ else {
     $opt_user_agent = "-A";
     $opt_cookie = "-b";
     $opt_verbose = "-v";
+    $opt_form = "-F";
 }
 
 my $httpver="";
 my $disabledheaders="";
-if(length(join("", @body))) {
+
+if($header{"content-type"} =~ /^multipart\/form-data;/) {
+    # multipart formpost, this is special
+    my $type = $header{"content-type"};
+    my $boundary = $type;
+    $boundary =~ s/.*boundary=(.*)/$1/;
+    my $inbound = $body[0];
+    chomp $inbound;
+    # a body MUST start with dash-dash-boundary
+    if("--$boundary" ne $inbound) {
+        $error = "unexpected multipart format";
+        goto error;
+    }
+    my $bline=1;
+
+    my %fheader;
+    my $fstate = 0;
+    my @fbody;
+    while($body[$bline]) {
+        my $l = $body[$bline];
+        if(0 == $fstate) {
+            # headers
+            chomp $l;
+            if($l =~ /([^:]*): *(.*)/) {
+                $fheader{lc($1)}=$2;
+            }
+            elsif(length($l)<2) {
+                # body time
+                $fstate++;
+            }
+        }
+        elsif($fstate) {
+            if($l =~ /^--$boundary/) {
+                # end of this part
+                my $cd = $fheader{'content-disposition'};
+                if(!$cd) {
+                    $error = "multi-part without Content-Disposition: header!";
+                    goto error;
+                }
+                # Content-Disposition: form-data; name="name"
+                # Content-Disposition: form-data; name="file"; filename="README.md"
+                if($cd =~ /^form-data; name=([^;]*)[;]? *(.*)/i) {
+                    my ($n, $f)=($1, $2);
+                    # name is with or without quotes
+                    $n =~ s/\"//g;
+                    if($f =~ /^filename=(.*)/) {
+                        # filename is with or without quotes
+                        $f = $1;
+                        $f =~ s/\"//g;
+                    }
+                    if(!$multipart) {
+                        push @docs, manpage("-F", $opt_form, "send a multipart formpost");
+                    }
+                    if(!$f) {
+                        my $fbody = join("", @fbody);
+                        $fbody =~ s/[ \n\r]+\z//g;
+                        $multipart .= "$opt_form $n=$fbody ";
+                    }
+                    else {
+                        # file name was present
+                        $multipart .= "$opt_form $n=\@$f ";
+                    }
+                }
+                $fstate = 0;
+                %fheader = 0;
+                $bline++;
+                next;
+            }
+            push @fbody, $l;
+        }
+        $bline++;
+    }
+    if($body[$bline-1] !~ /^--$boundary--/) {
+        print STDERR "bad last line?";
+    }
+
+    $header{"content-type"} = ""; # blank it
+    $do_multipart = 1;
+
+}
+elsif(length(join("", @body))) {
     # TODO: escape the body
     my $esc = join("", @body);
     chomp $esc; # trim the final newline
@@ -138,7 +231,7 @@ if(uc($method) eq "HEAD") {
     push @docs, manpage("-I", $opt_head, "send a HEAD request");
 }
 elsif(uc($method) eq "POST") {
-    if(!$usebody) {
+    if(!$usebody && !$do_multipart) {
         $usebody= sprintf("$opt_data \"\" ");
         push @docs, manpage("-d", $opt_data, "send this string as a body with POST");
     }
@@ -198,6 +291,10 @@ foreach my $h (keys %header) {
     elsif(lc($h) eq "expect") {
         # let curl do expect on its own
     }
+    elsif(lc($h) eq "content-type" &&
+          $do_multipart) {
+        # skip this for multipart
+    }
     elsif((lc($h) eq "accept") &&
           ($header{"accept"} eq "*/*")) {
         # ignore if set to */* as that's a curl default
@@ -235,7 +332,7 @@ if($useverbose) {
     push @docs, manpage("-v", $opt_verbose, "show verbose output");
 }
 
-printf "curl ${useverbose}${usemethod}${httpver}${disabledheaders}${addedheaders}${usebody}${url}\n";
+printf "curl ${useverbose}${usemethod}${httpver}${disabledheaders}${addedheaders}${usebody}${multipart}${url}\n";
 
 if($usenotes) {
     print "---\n";
