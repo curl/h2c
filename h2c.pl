@@ -1,5 +1,7 @@
 #!/usr/bin/perl
 
+use MIME::Base64;
+
 sub usage {
     print "h2c.pl [-d][-h][-i][-n][-s][-v] < file \n",
         " -a   Allow curl's default headers\n",
@@ -117,6 +119,7 @@ if($uselongoptions) {
     $opt_cookie = "--cookie";
     $opt_verbose = "--verbose";
     $opt_form = "--form";
+    $opt_user = "--user";
 }
 else {
     $opt_data = "-d";
@@ -127,6 +130,7 @@ else {
     $opt_cookie = "-b";
     $opt_verbose = "-v";
     $opt_form = "-F";
+    $opt_user = "-u";
 }
 
 my $httpver="";
@@ -299,6 +303,12 @@ if($do_multipart) {
 foreach my $h (sort keys %header) {
     if(lc($h) eq "host") {
         # We use Host: for the URL creation
+    }
+    elsif((lc($h) eq "authorization") &&
+          ($header{'authorization'} =~ /^Basic (.*)/)) {
+        my $decoded = decode_base64($1);
+        $addedheaders .= sprintf("%s \"%s\" ", $opt_user, $decoded);
+        push @docs, manpage("-u", $opt_user, "use this user and password for Basic auth");
     }
     elsif(lc($h) eq "expect") {
         # let curl do expect on its own
