@@ -2,6 +2,7 @@
 
 sub usage {
     print "h2c.pl [-d][-h][-n][-s][-v] < file \n",
+        " -a   Allow curl's default headers\n",
         " -d   Output man page HTML links after command line\n",
         " -h   Show short help\n",
         " -n   Output notes after command line\n",
@@ -26,6 +27,10 @@ my $uselongoptions = 1; # instead of short
 while($ARGV[0]) {
     if(($ARGV[0] eq "-h") || ($ARGV[0] eq "--help")) {
         usage();
+    }
+    elsif($ARGV[0] eq "-a") {
+        $disableheadersnotseen = 0;
+        shift @ARGV;
     }
     elsif($ARGV[0] eq "-d") {
         $usedocs = 1;
