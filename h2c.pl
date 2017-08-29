@@ -1,11 +1,12 @@
 #!/usr/bin/perl
 
 sub usage {
-    print "h2c.pl [-d][-h][-n][-s] < file \n",
+    print "h2c.pl [-d][-h][-n][-s][-v] < file \n",
         " -d   Output man page HTML links after command line\n",
         " -h   Show short help\n",
         " -n   Output notes after command line\n",
-        " -s   Use short command line options\n";
+        " -s   Use short command line options\n",
+        " -v   Add a verbose option to the command line";
     exit;
 }
 
@@ -14,8 +15,7 @@ sub manpage {
     if(!$n) {
         $n = $p;
     }
-    return sprintf("<a href=\"https://curl.haxx.se/docs/manpage.html#%s\">%s</a> $desc",
-                   $p, $n);
+    return sprintf("%s;%s;$desc", $p, $n);
 }
 
 my $usesamehttpversion = 1;
@@ -38,6 +38,13 @@ while($ARGV[0]) {
     elsif($ARGV[0] eq "-s") {
         $uselongoptions = 0;
         shift @ARGV;
+    }
+    elsif($ARGV[0] eq "-v") {
+        $useverbose = 1;
+        shift @ARGV;
+    }
+    else {
+        usage();
     }
 }
 
@@ -92,6 +99,7 @@ if($uselongoptions) {
     $opt_header = "--header";
     $opt_user_agent = "--user-agent";
     $opt_cookie = "--cookie";
+    $opt_verbose = "--verbose";
 }
 else {
     $opt_data = "-d";
@@ -100,6 +108,7 @@ else {
     $opt_header = "-H";
     $opt_user_agent = "-A";
     $opt_cookie = "-b";
+    $opt_verbose = "-v";
 }
 
 my $httpver="";
@@ -209,7 +218,12 @@ if($disabledheaders || $addedheaders) {
     push @docs, manpage("-H", $opt_header, "Add, replace or remove HTTP headers from the request");
 }
 
-printf "curl ${usemethod}${httpver}${disabledheaders}${addedheaders}${usebody}${url}\n";
+if($useverbose) {
+    $useverbose = "$opt_verbose ";
+    push @docs, manpage("-v", $opt_verbose, "Show verbose output");
+}
+
+printf "curl ${useverbose}${usemethod}${httpver}${disabledheaders}${addedheaders}${usebody}${url}\n";
 
 if($usenotes) {
     print "---\n";
