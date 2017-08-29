@@ -284,6 +284,15 @@ if($disableheadersnotseen) {
         $disabledheaders .= "$opt_header User-Agent: ";
     }
 }
+
+if($do_multipart) {
+    if(!$header{lc("expect")}) {
+        # no expect header, disable it for us too since curl -F defaults to
+        # Expect: 100-continue
+        $disabledheaders .= "$opt_header Expect: ";
+    }
+}
+
 foreach my $h (keys %header) {
     if(lc($h) eq "host") {
         # We use Host: for the URL creation
