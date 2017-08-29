@@ -250,6 +250,16 @@ elsif(uc($method) eq "PUT") {
     $usebody .= "$opt_request PUT ";
     push @docs, manpage("-X", $opt_request, "replace the request method with this string");
 }
+elsif(uc($method) eq "OPTIONS") {
+    $usemethod .= "$opt_request OPTIONS ";
+    if($path !~ /^\//) {
+        # very special case
+        $requesttarget="--request-target \"$path\" ";
+        push @docs, manpage("--request-target", "",
+                            "specify request target to use instead of using the URL's");
+        $path = "";
+    }
+}
 elsif(uc($method) ne "GET") {
     $error = "unsupported HTTP method $method";
     goto error;
@@ -362,7 +372,7 @@ if($useverbose) {
     push @docs, manpage("-v", $opt_verbose, "show verbose output");
 }
 
-printf "curl ${useverbose}${usemethod}${httpver}${disabledheaders}${addedheaders}${usebody}${multipart}${url}\n";
+printf "curl ${useverbose}${usemethod}${httpver}${disabledheaders}${addedheaders}${usebody}${multipart}${requesttarget}${url}\n";
 
 if($usenotes) {
     print "---\n";
