@@ -1,10 +1,21 @@
 #!/usr/bin/perl
 
 sub usage {
-    print "h2c.pl [-s] < file \n",
-        " -h   Show short help\n";
+    print "h2c.pl [-d][-h][-n][-s] < file \n",
+        " -d   Output man page HTML links after command line\n",
+        " -h   Show short help\n",
+        " -n   Output notes after command line\n",
         " -s   Use short command line options\n";
     exit;
+}
+
+sub manpage {
+    my ($p, $n, $desc) = @_;
+    if(!$n) {
+        $n = $p;
+    }
+    return sprintf("<a href=\"https://curl.haxx.se/docs/manpage.html#%s>%s</a> $desc",
+                   $p, $n);
 }
 
 my $usesamehttpversion = 1;
@@ -16,7 +27,15 @@ while($ARGV[0]) {
     if(($ARGV[0] eq "-h") || ($ARGV[0] eq "--help")) {
         usage();
     }
-    if($ARGV[0] eq "-s") {
+    elsif($ARGV[0] eq "-d") {
+        $usedocs = 1;
+        shift @ARGV;
+    }
+    elsif($ARGV[0] eq "-n") {
+        $usenotes = 1;
+        shift @ARGV;
+    }
+    elsif($ARGV[0] eq "-s") {
         $uselongoptions = 0;
         shift @ARGV;
     }
@@ -92,22 +111,31 @@ if(length(join("", @body))) {
     if($shellcompatible) {
         $esc =~ s/\n/ /g; # turn newlines into space!
         $esc =~ s/\"/\\"/g; # escape double quotes
+        if(!$unixescaped) {
+            push @notes, "uses quotes suitable for *nix command lines";
+            $unixescaped++;
+        }
     }
     $usebody= sprintf("--data-binary \"%s\" ", $esc);
+    push @docs, manpage("--data-binary", "", "send this string as a body with POST");
 }
 if(uc($method) eq "HEAD") {
     $usemethod = "$opt_head ";
+    push @docs, manpage("-I", $opt_head, "send a HEAD request");
 }
 elsif(uc($method) eq "POST") {
     if(!$usebody) {
         $usebody= sprintf("$opt_data \"\" ");
+        push @docs, manpage("-d", $opt_data, "send this string as a body with POST");
     }
 }
 elsif(uc($method) eq "PUT") {
     if(!$usebody) {
         $usebody= sprintf("$opt_data \"\"");
+        push @docs, manpage("-d", $opt_data, "send this string as a body with POST");
     }
     $usebody .= "$opt_request PUT ";
+    push @docs, manpage("-X", $opt_request, "replace the request method with this string");
 }
 elsif(uc($method) ne "GET") {
     $error = "unsupported HTTP method $method";
@@ -118,9 +146,11 @@ elsif(uc($method) ne "GET") {
 if($usesamehttpversion) {
     if(uc($http) eq "HTTP/1.1") {
         $httpver = "--http1.1 ";
+        push @docs, manpage("--http1.1", "use HTTP protocol version 1.1");
     }
     elsif(uc($http) eq "HTTP/2") {
         $httpver = "--http2 ";
+        push @docs, manpage("--http2", "use HTTP protocol version 2");
     }
     else {
         $error = "unsupported HTTP version $http";
@@ -146,9 +176,11 @@ foreach my $h (keys %header) {
         my $opt = sprintf("$opt_header \"%s: ", $h);
         if(lc($h) eq "user-agent") {
             $opt = "$opt_user_agent \"";
+            push @docs, manpage("-A", $opt_user_agent, "use this custom User-Agent request header");
         }
         elsif(lc($h) eq "cookie") {
             $opt = "$opt_cookie \"";
+            push @docs, manpage("-b", $opt_cookie, "Pass on this custom Cookie: request header");
         }
         $addedheaders .= sprintf("%s%s\" ", $opt, $header{$h});
     }
@@ -162,3 +194,17 @@ else {
 }
 
 printf "curl ${usemethod}${httpver}${disabledheaders}${addedheaders}${usebody}${url}\n";
+
+if($usenotes) {
+    print "---\n";
+    foreach my $n (@notes) {
+        print "$n\n";
+    }
+}
+
+if($usedocs) {
+    print "---\n";
+   foreach my $d (@docs) {
+       print "$d\n";
+   }
+}
