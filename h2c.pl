@@ -205,6 +205,10 @@ else {
     $url = sprintf "https://%s%s", $header{lc('Host')}, $path;
 }
 
+if($disabledheaders || $addedheaders) {
+    push @docs, manpage("-H", $opt_header, "Add, replace or remove HTTP headers from the request");
+}
+
 printf "curl ${usemethod}${httpver}${disabledheaders}${addedheaders}${usebody}${url}\n";
 
 if($usenotes) {
