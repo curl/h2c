@@ -334,6 +334,11 @@ foreach my $h (sort keys %header) {
           ($do_multipart || $ignore_contenttype)) {
         # skip this for multipart
     }
+    elsif(($h eq "accept-encoding") &&
+          ($header{$h} =~ /gzip/)) {
+        push @docs, manpage("--compressed", "", "request a compressed response");
+        $addedheaders .= "--compressed ";
+    }
     elsif((lc($h) eq "accept") &&
           ($header{"accept"} eq "*/*")) {
         # ignore if set to */* as that's a curl default
