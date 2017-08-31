@@ -10,7 +10,7 @@ sub usage {
         " -i   Ignore HTTP version\n",
         " -n   Output notes after command line\n",
         " -s   Use short command line options\n",
-        " -v   Add a verbose option to the command line";
+        " -v   Add a verbose option to the command line\n";
     exit;
 }
 
