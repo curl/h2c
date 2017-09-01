@@ -244,7 +244,7 @@ elsif(uc($method) eq "POST") {
 }
 elsif(uc($method) eq "PUT") {
     if(!$usebody) {
-        $usebody= sprintf("$opt_data \"\"");
+        $usebody= sprintf("$opt_data \"\" ");
         push @docs, manpage("-d", $opt_data, "send this string as a body with POST");
     }
     $usebody .= "$opt_request PUT ";
