@@ -3,14 +3,15 @@
 use MIME::Base64;
 
 sub usage {
-    print "h2c.pl [-d][-h][-i][-n][-s][-v] < file \n",
+    print "h2c.pl [options] < file \n",
         " -a   Allow curl's default headers\n",
         " -d   Output man page HTML links after command line\n",
         " -h   Show short help\n",
         " -i   Ignore HTTP version\n",
+        " --libcurl Output libcurl code instead\n",
         " -n   Output notes after command line\n",
         " -s   Use short command line options\n",
-        " -v   Add a verbose option to the command line\n";
+        " -v   Add a verbose option to the command line\n",
     exit;
 }
 
@@ -26,6 +27,7 @@ my $usesamehttpversion = 1;
 my $disableheadersnotseen = 1;
 my $shellcompatible = 1; # may not been windows command prompt compat
 my $uselongoptions = 1; # instead of short
+my $uselibcurl = 0; # --libcurl
 
 while($ARGV[0]) {
     if(($ARGV[0] eq "-h") || ($ARGV[0] eq "--help")) {
@@ -41,6 +43,10 @@ while($ARGV[0]) {
     }
     elsif($ARGV[0] eq "-i") {
         $usesamehttpversion = 0;
+        shift @ARGV;
+    }
+    elsif($ARGV[0] eq "--libcurl") {
+        $uselibcurl = 1;
         shift @ARGV;
     }
     elsif($ARGV[0] eq "-n") {
@@ -377,7 +383,18 @@ if($useverbose) {
     push @docs, manpage("-v", $opt_verbose, "show verbose output");
 }
 
-printf "curl ${useverbose}${usemethod}${httpver}${disabledheaders}${addedheaders}${usebody}${multipart}${requesttarget}${url}\n";
+# This adds the -x option to prevent a curl request to actually go out to any
+# remote server
+my $lib="--libcurl - -x localhost:0 " if($uselibcurl);
+my $curlcmd = sprintf "curl ${useverbose}${usemethod}${httpver}${disabledheaders}${addedheaders}${usebody}${multipart}${requesttarget}${lib}${url}";
+
+if($uselibcurl) {
+    # this actually runs curl which will fail to connect so ignore errors
+    print `$curlcmd 2>/dev/null`;
+}
+else {
+    print "$curlcmd\n";
+}
 
 if($usenotes) {
     print "---\n";
