@@ -199,7 +199,8 @@ if($header{"content-type"} =~ /^multipart\/form-data;/) {
                     if(!$f) {
                         my $fbody = join("", @fbody);
                         $fbody =~ s/[ \n\r]+\z//g;
-                        $multipart .= "$opt_form $n=$fbody ";
+                        $fbody =~ s/([\"\'\`])/\\$1/g;
+                        $multipart .= "$opt_form $n=\"$fbody\" ";
                         @fbody="";
                     }
                     else {
