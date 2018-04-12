@@ -199,10 +199,7 @@ if($header{"content-type"} =~ /^multipart\/form-data;/) {
                     if(!$f) {
                         my $fbody = join("", @fbody);
                         $fbody =~ s/[ \n\r]+\z//g;
-
-                        # escape % for windows %PATH% etc
-                        # escape \, $, ", ' and ` to avoid shell mistakes
-                        $fbody =~ s/([%\\\$\"\'\`])/\\$1/g;
+                        $fbody =~ s/([\\\$\"\'\`])/\\$1/g;
                         $multipart .= "$opt_form $n=\"$fbody\" ";
                         @fbody="";
                     }
