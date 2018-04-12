@@ -200,6 +200,7 @@ if($header{"content-type"} =~ /^multipart\/form-data;/) {
                         my $fbody = join("", @fbody);
                         $fbody =~ s/[ \n\r]+\z//g;
                         $multipart .= "$opt_form $n=$fbody ";
+                        @fbody="";
                     }
                     else {
                         # file name was present
