@@ -390,7 +390,14 @@ my $curlcmd = sprintf "curl ${useverbose}${usemethod}${httpver}${disabledheaders
 
 if($uselibcurl) {
     # this actually runs curl which will fail to connect so ignore errors
-    print `$curlcmd 2>/dev/null`;
+    open(C, "$curlcmd 2>/dev/null|");
+    while(<C>) {
+        # skip CURLOPT_PROXY since that's only used to avoid network
+        if($_ !~ /CURLOPT_PROXY, /) {
+            print $_;
+        }
+    }
+    close(C);
 }
 else {
     print "$curlcmd\n";
