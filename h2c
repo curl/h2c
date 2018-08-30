@@ -369,7 +369,7 @@ foreach my $h (sort keys %header) {
     }
 }
 
-if($path =~ / /) {
+if($path =~ /[ &?]/) {
     $url = sprintf "\"https://%s%s\"", $header{'host'}, $path;
 }
 else {
