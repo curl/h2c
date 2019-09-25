@@ -11,7 +11,7 @@ sub usage {
         " --libcurl Output libcurl code instead\n",
         " -n   Output notes after command line\n",
         " -s   Use short command line options\n",
-        " -v   Add a verbose option to the command line\n",
+        " -v   Add a verbose option to the command line\n";
     exit;
 }
 
