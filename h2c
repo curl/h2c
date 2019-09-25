@@ -7,6 +7,7 @@ sub usage {
         " -a   Allow curl's default headers\n",
         " -d   Output man page HTML links after command line\n",
         " -h   Show short help\n",
+        " -H   Output HTTP generated URLs instead\n",
         " -i   Ignore HTTP version\n",
         " --libcurl Output libcurl code instead\n",
         " -n   Output notes after command line\n",
@@ -28,6 +29,7 @@ my $disableheadersnotseen = 1;
 my $shellcompatible = 1; # may not been windows command prompt compat
 my $uselongoptions = 1; # instead of short
 my $uselibcurl = 0; # --libcurl
+my $usehttp = 0;
 
 while($ARGV[0]) {
     if(($ARGV[0] eq "-h") || ($ARGV[0] eq "--help")) {
@@ -39,6 +41,10 @@ while($ARGV[0]) {
     }
     elsif($ARGV[0] eq "-d") {
         $usedocs = 1;
+        shift @ARGV;
+    }
+    elsif($ARGV[0] eq "-H") {
+        $usehttp = 1;
         shift @ARGV;
     }
     elsif($ARGV[0] eq "-i") {
@@ -370,10 +376,10 @@ foreach my $h (sort keys %header) {
 }
 
 if($path =~ /[ &?]/) {
-    $url = sprintf "\"https://%s%s\"", $header{'host'}, $path;
+    $url = sprintf "\"%s://%s%s\"", $usehttp ? "http" : "https", $header{'host'}, $path;
 }
 else {
-    $url = sprintf "https://%s%s", $header{'host'}, $path;
+    $url = sprintf "%s://%s%s", $usehttp ? "http" : "https", $header{'host'}, $path;
 }
 
 if($disabledheaders || $addedheaders) {
