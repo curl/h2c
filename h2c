@@ -72,7 +72,7 @@ my $line = 1;
 while(<STDIN>) {
     my $l = $_;
     # discard CRs completely
-    $l =~ s///g;
+    $l =~ s/\r//g;
     if(!$state) {
         chomp $l;
         if($l =~ /([^ ]*) +(.*) +(HTTP\/.*)/) {
