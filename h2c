@@ -293,7 +293,7 @@ if($usebody) {
     }
     elsif((lc($header{"content-type"}) eq
            "application/x-www-form-urlencoded") && !$do_multipart &&
-          ($method eq "POST")) {
+          (uc($method) eq "POST")) {
         # default for normal POST
         $ignore_contenttype = 1;
     }
