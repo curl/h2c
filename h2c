@@ -85,6 +85,8 @@ while(<STDIN>) {
             $method = $1;
             $path = $2;
             $http = $3;
+            # convenience thing: convert spaces to %20
+            $path =~ s/ /%20/g;
         }
         else {
             $error="bad request-line";
@@ -375,11 +377,13 @@ foreach my $h (sort keys %header) {
     }
 }
 
-if($path =~ /[ &?]/) {
+if($path =~ /[&?]/) {
     $url = sprintf "\"%s://%s%s\"", $usehttp ? "http" : "https", $header{'host'}, $path;
 }
 else {
-    $url = sprintf "%s://%s%s", $usehttp ? "http" : "https", $header{'host'}, $path;
+    $url = sprintf "%s://%s%s",
+        $usehttp ? "http" : "https",
+        $header{'host'}, $path;
 }
 
 if($disabledheaders || $addedheaders) {
@@ -394,7 +398,7 @@ if($useverbose) {
 # This adds the -x option to prevent a curl request to actually go out to any
 # remote server
 my $lib="--libcurl - -x localhost:0 " if($uselibcurl);
-my $curlcmd = sprintf "curl ${useverbose}${usemethod}${httpver}${disabledheaders}${addedheaders}${usebody}${multipart}${requesttarget}${lib}${url}";
+my $curlcmd = "curl ${useverbose}${usemethod}${httpver}${disabledheaders}${addedheaders}${usebody}${multipart}${requesttarget}${lib}${url}";
 
 if($uselibcurl) {
     # this actually runs curl which will fail to connect so ignore errors
