@@ -1,0 +1,62 @@
+<p>
+Paste the HTTP request into the text field and get the correspending curl
+command line for generating such a request.
+<p>
+<form action="./" method="POST">
+<table><tr><td valign="top">
+<textarea name="http" rows="15" cols="50">
+%http%
+</textarea>
+</td><td valign="top">
+<input type="checkbox" name="shortopt" %shortopt%> use short command line options
+<br>
+<input type="checkbox" name="verboseopt" %verboseopt%> enable verbose output
+<br>
+<input type="checkbox" name="defaultopt" %defaultopt%> allow curl's default headers
+<br>
+<input type="checkbox" name="versionopt" %versionopt%> insist on same HTTP version
+</td></tr></table>
+
+  <input type=submit value="convert">
+</form>
+
+<p>
+ Command:
+<div style="font-size: 120%; font-family: monospace; background-color: #f0f0f0; padding: 0.5em 0.5em 0.5em 0.5em;">
+%curl%
+</div>
+
+<h2>Documentation links for used options</h2>
+<ul>
+%docs%
+</ul>
+
+<p>
+  The generated command line <i>assumes</i> a HTTPS site and generates such a
+  URL. There is typically nothing in the request that tells if HTTPS or HTTP
+  was used.
+<p>
+  If you submit an illegally formatted HTTP request, chances are the shown
+  curl command line might not reproduce it perfectly. curl is primarily made
+  to generate fine HTTP.
+
+<h2>Use this with curl!</h2>
+<p>
+  Save the HTTP request you want to send in a local <b>file</b>, then send it
+  here like this:
+
+<div style="font-size: 120%; font-family: monospace; background-color: #f0f0f0; padding: 0.5em 0.5em 0.5em 0.5em;">
+  curl --data-urlencode http@file https://curl.se/h2c/
+</div>
+<p>
+ ... and you'll get a curl command line in response.
+  
+<h2>Privacy</h2>
+<p>
+ All data you submit to this web service will be crunched and converted on the
+ curl server. To keep your HTTP requests private, download h2c and run it
+ yourself locally.
+
+<hr>
+ <a href="https://github.com/curl/h2c">h2c on github</a>
+
