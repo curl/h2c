@@ -397,7 +397,8 @@ if($useverbose) {
 
 # This adds the -x option to prevent a curl request to actually go out to any
 # remote server
-my $lib="--libcurl - -x localhost:0 " if($uselibcurl);
+my $lib="";
+$lib="--libcurl - -x localhost:0 " if($uselibcurl);
 my $curlcmd = "curl ${useverbose}${usemethod}${httpver}${disabledheaders}${addedheaders}${usebody}${multipart}${requesttarget}${lib}${url}";
 
 if($uselibcurl) {
