@@ -403,14 +403,14 @@ my $curlcmd = "curl ${useverbose}${usemethod}${httpver}${disabledheaders}${added
 
 if($uselibcurl) {
     # this actually runs curl which will fail to connect so ignore errors
-    open(C, "$curlcmd 2>/dev/null|");
-    while(<C>) {
+    open(my $c, "$curlcmd 2>/dev/null|");
+    while(<$c>) {
         # skip CURLOPT_PROXY since that's only used to avoid network
         if($_ !~ /CURLOPT_PROXY, /) {
             print $_;
         }
     }
-    close(C);
+    close($c);
 }
 else {
     print "$curlcmd\n";
