@@ -33,7 +33,14 @@ multipart!
     POST /upload HTTP/1.1
     Host: example.com
     User-Agent: curl/7.55.0
-    Accept: */*
+    Accept: */*$ cat test
+HEAD  / HTTP/1.1
+Host: curl.se
+User-Agent: moo
+Shoesize: 12
+
+$ ./h2c < test
+curl --head --http1.1 --header Accept: --user-agent "moo" --header "Shoesize: 12" https://curl.se/
     Content-Length: 1236
     Expect: 100-continue
     Content-Type: multipart/form-data; boundary=------------------------2494bcbbb6e66a98
