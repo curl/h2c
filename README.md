@@ -1,4 +1,4 @@
-# h2c
+# h2cmake](https/github.com/curl/curl-www/actions/workflows/make.yml/badge.svg)](https/github.com/curl/curl-www/actions/workflows/make.yml)
 headers 2 curl. Provided a set of HTTP request headers, output the curl command line for generating that set.
 
     $ cat test
