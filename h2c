@@ -79,6 +79,7 @@ while(<STDIN>) {
     my $l = $_;
     # discard CRs completely
     $l =~ s/\r//g;
+    $l =~ s/\"/\\"/g;
     if(!$state) {
         chomp $l;
         if($l =~ /([^ ]*) +(.*) +(HTTP\/.*)/) {
@@ -321,6 +322,7 @@ if($disableheadersnotseen) {
     }
     if(!$header{'user-agent'}) {
         $disabledheaders .= "$opt_header User-Agent: ";
+        
     }
 }
 
@@ -412,6 +414,7 @@ if($uselibcurl) {
     close(C);
 }
 else {
+    $curlcmd =~ s/\\\\\"/\\"/g;
     print "$curlcmd\n";
 }
 
